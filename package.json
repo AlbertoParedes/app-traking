@@ -15,7 +15,8 @@
     "dist:linux": "npm run transpile:electron && npm run build && electron-builder --linux --x64",
     "test:e2e": "playwright test",
     "test:unit": "vitest src",
-    "generate-styles": "npx tailwindcss -i ./src/ui/index.css -o ./styles.css"
+    "generate-styles": "npx tailwindcss -i ./src/ui/index.css -o ./styles.css",
+    "pip-install": "pip install undetected-chromedriver selenium requests setuptools"
   },
   "dependencies": {
     "@heroui/react": "^2.7.8",

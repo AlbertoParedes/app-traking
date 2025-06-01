@@ -6,10 +6,12 @@ export const tracking = (data: any) => {
     const scriptPath = path.resolve('./src/python/search_google.py');
 
     const jsonData = JSON.stringify(data);
+    const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
 
     console.log('jsonData', jsonData);
+    console.log('pythonCommand', pythonCommand);
 
-    execFile('python3', [scriptPath, jsonData], (error, stdout, stderr) => {
+    execFile(pythonCommand, [scriptPath, jsonData], (error, stdout, stderr) => {
       if (error) {
         console.error('Error ejecutando Python:', error);
         return reject(error);

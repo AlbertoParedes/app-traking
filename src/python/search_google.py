@@ -10,6 +10,7 @@ import json
 import time
 import requests
 import socket
+import platform
 
 URL = 'https://www.google.es/webhp?num=100'
 ENTER = '\ue007'  # Tecla Enter en Selenium (Key.ENTER)
@@ -239,14 +240,26 @@ def run(check_banned=True):
     """Funcion encargada de arrancar el scraping"""
     logging.info("Run: %s", check_banned)
     
+    system = platform.system()
+    chrome_path = ""
+    if system == "Darwin":  # macOS
+        chrome_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+    elif system == "Windows":
+        chrome_path = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+    
+    if chrome_path:
+        logging.info("Chrome encontrado en: %s", chrome_path)
+    else:
+        logging.warning("No se encontró Chrome, usando configuración por defecto")
+        chrome_path = None
+        
     chrome_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     options = uc.ChromeOptions()
     options.binary_location = chrome_path  # 👈 forzamos el path
     driver = uc.Chrome(
         options=options,
-        # version_main=134,
         headless=False,
-        use_subprocess=True,  # recomendado en macOS
+        use_subprocess=True if system == "Darwin" else False,
     )
     wait = WebDriverWait(driver, DEFAULT_TIME_OUT)
 
