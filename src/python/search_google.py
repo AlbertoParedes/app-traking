@@ -245,7 +245,7 @@ def run(check_banned=True):
     if system == "Darwin":  # macOS
         chrome_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     elif system == "Windows":
-        chrome_path = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+        chrome_path = "C:\\Program Files\\Google\\Chrome\\chrome.exe"
     
     if chrome_path:
         logging.info("Chrome encontrado en: %s", chrome_path)
@@ -253,7 +253,6 @@ def run(check_banned=True):
         logging.warning("No se encontró Chrome, usando configuración por defecto")
         chrome_path = None
         
-    chrome_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     options = uc.ChromeOptions()
     options.binary_location = chrome_path  # 👈 forzamos el path
     driver = uc.Chrome(
