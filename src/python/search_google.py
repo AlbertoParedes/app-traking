@@ -245,7 +245,7 @@ def run(check_banned=True):
     if system == "Darwin":  # macOS
         chrome_path = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
     elif system == "Windows":
-        chrome_path = "C:\\Program Files\\Google\\Chrome\\chrome.exe"
+        chrome_path = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
     
     if chrome_path:
         logging.info("Chrome encontrado en: %s", chrome_path)
