@@ -258,7 +258,7 @@ def run(check_banned=True):
     driver = uc.Chrome(
         options=options,
         headless=False,
-        use_subprocess=True if system == "Darwin" else False,
+        use_subprocess=True
     )
     wait = WebDriverWait(driver, DEFAULT_TIME_OUT)
 
