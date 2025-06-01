@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: 'Inter';
+}
+
+body {
+  min-width: 100vw;
+  min-height: 100vh;
+  background-color: #000;
+}
