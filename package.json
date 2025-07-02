@@ -30,6 +30,7 @@
     "date-fns": "^4.1.0",
     "firebase": "9.20.0",
     "framer-motion": "^12.12.1",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.503.0",
     "os-utils": "^0.0.14",
     "react": "^18.3.1",

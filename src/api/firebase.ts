@@ -105,6 +105,14 @@ export const resetKeywordToDone = async ({ id_cliente, id_keyword }: { id_client
   return await update(dbRef, multiPath);
 };
 
+export const resetKeywords = async (keywords: any[]) => {
+  let multiPath: any = {};
+  keywords.forEach((keyword) => {
+    multiPath[`Clientes/${keyword.client.id_cliente}/servicios/tracking/keywords/${keyword.id_keyword}/done`] = false;
+  });
+  return await update(dbRef, multiPath);
+};
+
 export const uploadResults = async ({ searchDate, id_keyword, keyword, client, clientUrls, competitorsUrls, results }: any) => {
   try {
     let multiPath: any = {};

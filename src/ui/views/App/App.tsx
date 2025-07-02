@@ -1,10 +1,27 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { getClients, getTrackingDate, resetData, resetKeywordToDone, setTrackingDate, uploadResults } from '@/api/firebase';
+import { getClients, getTrackingDate, resetData, resetKeywords, resetKeywordToDone, setTrackingDate, uploadResults } from '@/api/firebase';
 import { filterActivesDomains, getKeywords } from '@/ui/utils/functions';
-import { Button, DatePicker, Table, TableHeader, TableBody, TableColumn, TableRow, TableCell, Pagination, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
-import { Actions, Container, Footer, Info, InputDate, LeftContent, PositionContainer, RightContent, TableContent, Title } from './App.styled';
+import { Button, DatePicker, Table, TableHeader, TableBody, TableColumn, TableRow, TableCell, Pagination, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Chip, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem, Select, SelectItem, Divider } from '@heroui/react';
+import { Actions, Container, Footer, Info, InfoActions, InfoContainer, InputDate, LeftContent, PositionContainer, RightContent, TableContent, Title } from './App.styled';
 import { parseDate, getLocalTimeZone, today } from '@internationalized/date';
 import Settings from '@/ui/assets/svg/Settings';
+import _ from 'lodash';
+import Trash from '@/ui/assets/svg/Trash';
+export const animals = [
+  { key: 'cat', label: 'Cat' },
+  { key: 'dog', label: 'Dog' },
+  { key: 'elephant', label: 'Elephant' },
+  { key: 'lion', label: 'Lion' },
+  { key: 'tiger', label: 'Tiger' },
+  { key: 'giraffe', label: 'Giraffe' },
+  { key: 'dolphin', label: 'Dolphin' },
+  { key: 'penguin', label: 'Penguin' },
+  { key: 'zebra', label: 'Zebra' },
+  { key: 'shark', label: 'Shark' },
+  { key: 'whale', label: 'Whale' },
+  { key: 'otter', label: 'Otter' },
+  { key: 'crocodile', label: 'Crocodile' }
+];
 
 function App() {
   const [allKeywords, setAllKeywords] = useState([]);
@@ -20,6 +37,9 @@ function App() {
   const [status, setStatus] = useState<'init' | 'running'>('init');
   const [keywordToDeleteResult, setKeywordToDeleteResult] = useState<{ id_cliente: string; id_keyword: string } | undefined>();
   const [showModalDeleteResult, setShowModalDeleteResult] = useState(false);
+  const [showModalDeleteResultsSelected, setShowModalDeleteResultsSelected] = useState(false);
+  const [clients, setClients] = useState([]);
+  const [keywordsSelectedRows, setKeywordsSelectedRows] = useState('all');
 
   const isRunningRef = useRef(false);
   const rowsPerPage = 50;
@@ -43,13 +63,16 @@ function App() {
 
     const clients = await getClients();
     const searchDate = await getTrackingDate();
+    const sortedClients: any = _.orderBy(clients ?? [], ['dominio'], ['asc']);
+
     setSearchDate(searchDate);
     setDateValue(parseDate(searchDate));
+    setClients(sortedClients);
 
     const { allKeywords, keywords, keywordsDoneWithoutResults, keywordsDone } = getKeywords({ clients, searchDate });
     setCompletedKeywords(keywordsDone);
     setAllKeywords(allKeywords);
-    setFilteredKeywords(allKeywords);
+    //setFilteredKeywords(allKeywords);
     setIsLoading(false);
   };
 
@@ -68,6 +91,13 @@ function App() {
   const handleCloseDeleteResultModal = () => {
     setKeywordToDeleteResult(undefined);
     setShowModalDeleteResult(false);
+  };
+
+  const handleCloseDeleteResultsSelectedModal = (resetSelectedKeys?: boolean) => {
+    if (resetSelectedKeys) {
+      setSelectedKeys(new Set());
+    }
+    setShowModalDeleteResultsSelected(false);
   };
 
   const handleSaveDate = async () => {
@@ -139,15 +169,55 @@ function App() {
     setIsLoading(true);
     if (keywordToDeleteResult) {
       await resetKeywordToDone(keywordToDeleteResult);
-      setCompletedKeywords((step: any) => {
-        const newStep = { ...step };
-        delete newStep[keywordToDeleteResult.id_keyword];
-        return newStep;
+      setCompletedKeywords((keywords: any) => {
+        const newKeywords = { ...keywords };
+        delete newKeywords[keywordToDeleteResult.id_keyword];
+        return newKeywords;
       });
       handleCloseDeleteResultModal();
     }
     setIsLoading(false);
   };
+
+  const handleDeleteKeywordsSelected = async () => {
+    setIsLoading(true);
+    const keywords: any[] = allKeywords.filter((keyword: any) => selectedKeys.has(keyword.id_keyword));
+    if (keywords.length) {
+      await resetKeywords(keywords);
+      setCompletedKeywords((_keywords: any) => {
+        const newKeywords = { ..._keywords };
+        keywords.forEach((keyowrd) => {
+          delete newKeywords[keyowrd.id_keyword];
+        });
+        return newKeywords;
+      });
+      handleCloseDeleteResultsSelectedModal(true);
+    }
+    setIsLoading(false);
+  };
+
+  const handleSelectionChange = (e: any) => {
+    setKeywordsSelectedRows(e.target.value);
+  };
+
+  const handleFilterTable = () => {
+    let keywords: any = [];
+    if (keywordsSelectedRows === 'all') {
+      keywords = allKeywords;
+    } else if (keywordsSelectedRows === 'keywords_without_results') {
+      keywords = allKeywords.filter(({ id_keyword }) => !completedKeywords?.[id_keyword]);
+    } else if (keywordsSelectedRows === 'keywords_out_range') {
+      keywords = allKeywords.filter(({ id_keyword }) => completedKeywords?.[id_keyword] && !completedKeywords?.[id_keyword]?.results?.new?.first_url);
+    } else {
+      keywords = allKeywords.filter(({ client }: any) => client.id_cliente === keywordsSelectedRows);
+    }
+    setFilteredKeywords(keywords);
+    setSelectedKeys(new Set());
+  };
+
+  useLayoutEffect(() => {
+    allKeywords.length > 0 && handleFilterTable();
+  }, [allKeywords, keywordsSelectedRows]);
 
   useEffect(() => {
     status === 'init' && (isRunningRef.current = false);
@@ -157,7 +227,7 @@ function App() {
   useLayoutEffect(() => {
     fetchData();
   }, []);
-  console.log(items);
+
   return (
     <Container>
       <Title>YoSEO Tracking</Title>
@@ -177,21 +247,49 @@ function App() {
             <DatePicker className="max-w-[182px]" labelPlacement={'outside'} value={dateValue} size="sm" onChange={handleChangeDate} minValue={searchDate ? parseDate(searchDate) : today(getLocalTimeZone())} />
           </InputDate>
         </LeftContent>
-        <RightContent></RightContent>
+        <RightContent>
+          <Select disableSelectorIconRotation className="max-w-xs" onChange={handleSelectionChange} selectedKeys={[keywordsSelectedRows]} isDisabled={status === 'running'}>
+            <>
+              <SelectItem key={'all'}>Todas las keywords</SelectItem>
+              <SelectItem key={'keywords_without_results'}>Keywords sin resultados</SelectItem>
+              <SelectItem key={'keywords_out_range'}>Keywords con resultados +100</SelectItem>
+              <SelectItem key={'divider'} textValue="---" className="pointer-events-none opacity-50">
+                <Divider />
+              </SelectItem>
+
+              {clients.map((client: any) => (
+                <SelectItem key={client.id_cliente}>{client.dominio}</SelectItem>
+              ))}
+            </>
+          </Select>
+        </RightContent>
       </Actions>
-      <Info>
-        <Chip variant="dot" color="secondary">
-          Total: {allKeywords.length}
-        </Chip>
-        <Chip variant="dot" color="success">
-          Completed: {Object.keys(completedKeywords).length}
-        </Chip>
-        {!!selectedKeys.size && (
-          <Chip variant="dot" color="primary">
-            Selected: {selectedKeys.size}
+      <InfoContainer>
+        <Info>
+          <Chip variant="dot" color="secondary">
+            Total: {allKeywords.length}
           </Chip>
-        )}
-      </Info>
+          <Chip variant="dot" color="success">
+            Completed: {Object.keys(completedKeywords).length}
+          </Chip>
+          <Chip variant="dot" color="default">
+            Filtered: {Object.keys(filteredKeywords).length}
+          </Chip>
+          {!!selectedKeys.size && (
+            <Chip variant="dot" color="primary">
+              Selected: {selectedKeys.size}
+            </Chip>
+          )}
+        </Info>
+        <InfoActions>
+          {!!filteredKeywords.length && !!selectedKeys.size && (
+            <Button size="sm" variant="faded" onPress={() => setShowModalDeleteResultsSelected(true)}>
+              <Trash />
+            </Button>
+          )}
+        </InfoActions>
+      </InfoContainer>
+
       <TableContent>
         <Table
           aria-label="Controlled table example with dynamic content"
@@ -217,9 +315,7 @@ function App() {
           <TableBody items={items}>
             {(item: any) => (
               <TableRow key={item.id_keyword}>
-                <TableCell>
-                  {item.keyword} {item.id_keyword}
-                </TableCell>
+                <TableCell>{item.keyword}</TableCell>
                 <TableCell>
                   <PositionContainer>
                     {item.done ? (
@@ -293,6 +389,23 @@ function App() {
               Cancelar
             </Button>
             <Button color="primary" onPress={handleDeleteKeyword} isLoading={isLoading}>
+              Eliminar
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      <Modal backdrop={'blur'} isOpen={showModalDeleteResultsSelected} onClose={handleCloseDeleteResultsSelectedModal}>
+        <ModalContent>
+          <ModalHeader className="flex flex-col gap-1">Eliminar {selectedKeys.size} resultados</ModalHeader>
+          <ModalBody>
+            <p>Al aceptar eliminarás los resultado de la última fecha y habilitarás las keywords para poder poder realizar una nueva búsqueda</p>
+          </ModalBody>
+          <ModalFooter>
+            <Button color="danger" variant="light" onPress={handleCloseDeleteResultsSelectedModal}>
+              Cancelar
+            </Button>
+            <Button color="primary" onPress={handleDeleteKeywordsSelected} isLoading={isLoading}>
               Eliminar
             </Button>
           </ModalFooter>

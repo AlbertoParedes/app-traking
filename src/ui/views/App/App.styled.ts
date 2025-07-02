@@ -144,14 +144,27 @@ export const Footer = styled.div`
 `;
 
 export const Info = styled.div`
-  margin-bottom: 24px;
-  padding-left: 24px;
-  padding-right: 24px;
   display: flex;
   gap: 12px;
+  align-items: center;
+  flex: 1;
 `;
 
 export const PositionContainer = styled.div`
   display: flex;
   gap: 4px;
+`;
+
+export const InfoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-left: 24px;
+  padding-right: 24px;
+  gap: 12px;
+`;
+
+export const InfoActions = styled.div`
+  display: flex;
+  align-items: center;
 `;
