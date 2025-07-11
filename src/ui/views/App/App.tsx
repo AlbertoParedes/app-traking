@@ -191,7 +191,7 @@ function App() {
         });
         return newKeywords;
       });
-      handleCloseDeleteResultsSelectedModal(true);
+      handleCloseDeleteResultsSelectedModal(false);
     }
     setIsLoading(false);
   };
@@ -270,14 +270,14 @@ function App() {
             Total: {allKeywords.length}
           </Chip>
           <Chip variant="dot" color="success">
-            Completed: {Object.keys(completedKeywords).length}
+            Completadas: {Object.keys(completedKeywords).length}
           </Chip>
           <Chip variant="dot" color="default">
-            Filtered: {Object.keys(filteredKeywords).length}
+            Filtradas: {Object.keys(filteredKeywords).length}
           </Chip>
           {!!selectedKeys.size && (
             <Chip variant="dot" color="primary">
-              Selected: {selectedKeys.size}
+              Seleccionadas: {selectedKeys.size}
             </Chip>
           )}
         </Info>
@@ -402,7 +402,7 @@ function App() {
             <p>Al aceptar eliminarás los resultado de la última fecha y habilitarás las keywords para poder poder realizar una nueva búsqueda</p>
           </ModalBody>
           <ModalFooter>
-            <Button color="danger" variant="light" onPress={handleCloseDeleteResultsSelectedModal}>
+            <Button color="danger" variant="light" onPress={() => handleCloseDeleteResultsSelectedModal(false)}>
               Cancelar
             </Button>
             <Button color="primary" onPress={handleDeleteKeywordsSelected} isLoading={isLoading}>
