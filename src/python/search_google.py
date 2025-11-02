@@ -18,8 +18,9 @@ SEARCH_INPUT = '[name="q"]'
 DECLINE_COOKIES = 'div[role="dialog"] > div:last-child > span > div > div > div > div:nth-child(3) > div:first-child > button:last-child'
 SEARCH_FORM_BUTTON = 'form[role="search"] [name="btnK"]'
 URLS_ELEMENTS = 'div#res > #search div.g, div.MjjYud'
+NEXT_PAGE = 'div[role="navigation"] a#pnnext'
 ACCORDION_EXPANDER = 'div[data-g][data-ullb]'
-LINK_ELEMENT = 'span[jscontroller][jsaction] > a[href][jsname][data-ved]'
+LINK_ELEMENT = 'span.V9tjod > a[href][jsname][data-ved]'
 POSITION_VAR = '{{position}}'
 CLIENT_URL_FOUND = '<div style="position: absolute; top: -10px; border: 4px solid #e64a89; width: calc(100% + 10px); height: calc(100% + 10px); left: -10px; border-radius: 13px;" ></div>'
 COMPETITOR_URL_FOUND = '<div style="position: absolute; top: -10px; border: 4px solid #4a9de6; width: calc(100% + 10px); height: calc(100% + 10px); left: -10px; border-radius: 13px;" ></div>'
@@ -43,6 +44,9 @@ logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 def close_cookies_modal(wait):
     """Funcion para cerrar modal de las cookies"""
     try:
+        reject_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, DECLINE_COOKIES)))
+        reject_btn.click()
+        time.sleep(2)
         reject_btn = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, DECLINE_COOKIES)))
         reject_btn.click()
         logging.info("✅ Cookies rechazadas")
@@ -155,6 +159,11 @@ def find_urls(domains, competitor_domains, driver, wait):
 
     return client_urls, competitors_urls
 
+def next_page(driver, wait):
+    """hacemos click en la pagina siguiente"""
+    wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, NEXT_PAGE)))
+    page_link = driver.find_element(By.CSS_SELECTOR, NEXT_PAGE)
+    return page_link
 
 def check_internet_connection():
     """Verifica si hay conexión a internet usando requests"""
@@ -276,23 +285,45 @@ def run(check_banned=True):
         # time.sleep(DEFAULT_WAIT)
         search_page(keyword, driver, wait)
         # time.sleep(DEFAULT_WAIT)
-        
-        if check_banned:
-            is_banned = banned(wait)
-            logging.info("is_banned: %s", is_banned)
-            if is_banned:
-                restart_success = restart_rooter(driver, wait)
-                if restart_success:
-                    return run(check_banned=False)
-                else:
-                    raise Exception("No se pudo reiniciar el router")
-
-        client_urls, competitors_urls = find_urls(domains, competitor_domains, driver, wait)
         result = {
-            "clientUrls": client_urls,
-            "competitorsUrls": competitors_urls,
+            "clientUrls": [],
+            "competitorsUrls": [],
             "ok": True
         }
+        page_number = 1
+        
+        while True:
+        
+            if check_banned:
+                is_banned = banned(wait)
+                logging.info("is_banned: %s", is_banned)
+                if is_banned:
+                    restart_success = restart_rooter(driver, wait)
+                    if restart_success:
+                        return run()
+                    else:
+                        raise Exception("No se pudo reiniciar el router")
+
+            client_urls, competitors_urls = find_urls(domains, competitor_domains, driver, wait)
+            result = {
+                "clientUrls": client_urls,
+                "competitorsUrls": competitors_urls,
+                "ok": True
+            }
+            
+            page_link = next_page(driver, wait)
+            if not page_link or len(client_urls) >= 1 or page_number >= 10:
+                break
+                
+            logging.info("➡️ Pasando a la siguiente página...")
+            try:
+                page_link.click()
+                time.sleep(DEFAULT_WAIT)
+                page_number += 1
+            except Exception as e:
+                logging.warning("⚠️ Error al hacer clic en siguiente página: %s", e)
+                break
+            
         driver.quit()
         print(json.dumps(result))
 
@@ -308,4 +339,4 @@ def run(check_banned=True):
 run()
 
 
-# python3 ./src/python/search_google.py '{"keyword":"agencia seo madrid","domains":[{"id":"-LlH6O10k81KNJSIgOg5","status":"activo","valor":"sedigital.es"}, {"id":"-LlH6O10k81KNJSIgOg5","status":"activo","valor":"agenciaseo.eu"}],"competitorDomains":[{"id":"-LlH6O10k81KNJSIgOg5","status":"activo","valor":"jrizo.com"}, {"id":"-LlH6O10k81KNJSIgOg5","status":"activo","valor":"idento.es/agencia-seo-madrid"}]}'
+# python3 ./src/python/search_google.py '{"keyword":"agencia seo madrid","domains":[{"id":"-LlH6O10k81KNJSIgOg5","status":"activo","valor":"robleragency.com"}],"competitorDomains":[{"id":"-LlH6O10k81KNJSIgOg5","status":"activo","valor":"jrizo.com"}, {"id":"-LlH6O10k81KNJSIgOg5","status":"activo","valor":"idento.es/agencia-seo-madrid"}]}'
