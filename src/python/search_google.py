@@ -156,7 +156,9 @@ def find_urls(domains, competitor_domains, driver, wait, start_position=0):
         except Exception as e:
             logging.warning("⚠️ Error procesando un elemento: %s", e)
             continue
-
+    
+    logging.info("position: %s", position)
+    
     return client_urls, competitors_urls, position
 
 def next_page(driver, wait):
@@ -320,7 +322,7 @@ def run(check_banned=True):
                 page_link.click()
                 time.sleep(DEFAULT_WAIT)
                 page_number += 1
-                start_position += current_position
+                start_position = current_position
             except Exception as e:
                 logging.warning("⚠️ Error al hacer clic en siguiente página: %s", e)
                 break
