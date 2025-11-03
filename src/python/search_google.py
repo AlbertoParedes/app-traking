@@ -77,11 +77,11 @@ def normalize_domain(domain):
     return domain
 
 
-def find_urls(domains, competitor_domains, driver, wait):
+def find_urls(domains, competitor_domains, driver, wait, start_position=0):
     """Extrae URLs del DOM y clasifica si son del cliente o competidor"""
     client_urls = []
     competitors_urls = []
-    position = 0
+    position = start_position
     wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, URLS_ELEMENTS)))
     elements = driver.find_elements(By.CSS_SELECTOR, URLS_ELEMENTS)
     logging.info("🧪 Total elementos encontrados: %s", len(elements))
@@ -157,7 +157,7 @@ def find_urls(domains, competitor_domains, driver, wait):
             logging.warning("⚠️ Error procesando un elemento: %s", e)
             continue
 
-    return client_urls, competitors_urls
+    return client_urls, competitors_urls, position
 
 def next_page(driver, wait):
     """hacemos click en la pagina siguiente"""
@@ -291,7 +291,7 @@ def run(check_banned=True):
             "ok": True
         }
         page_number = 1
-        
+        start_position = 0
         while True:
         
             if check_banned:
@@ -304,7 +304,7 @@ def run(check_banned=True):
                     else:
                         raise Exception("No se pudo reiniciar el router")
 
-            client_urls, competitors_urls = find_urls(domains, competitor_domains, driver, wait)
+            client_urls, competitors_urls, current_position = find_urls(domains, competitor_domains, driver, wait, start_position)
             result = {
                 "clientUrls": client_urls,
                 "competitorsUrls": competitors_urls,
@@ -320,6 +320,7 @@ def run(check_banned=True):
                 page_link.click()
                 time.sleep(DEFAULT_WAIT)
                 page_number += 1
+                start_position += current_position
             except Exception as e:
                 logging.warning("⚠️ Error al hacer clic en siguiente página: %s", e)
                 break
